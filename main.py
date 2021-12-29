@@ -42,7 +42,7 @@ def get_posts():
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_posts(post: Post):
+def create_a_posts(post: Post):
     cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING 
     * """, 
                     (post.title, post.content, post.published))
@@ -77,10 +77,11 @@ def delete_post(id: int):
 
 @app.put("/posts/{id}")
 def update_post(id: int, post: Post):
-    cursor.execute("""UPDATE posts SELECT title = %s, content = %s, published = %s RETURNING 
+    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING 
     * """, 
-                    (post.title, post.content, post.published))
+                    (post.title, post.content, post.published, str(id)))
     updated_post = cursor.fetchone()
+    conn.commit()
     if updated_post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                             detail = f"post with id: {id} does not exist!")
