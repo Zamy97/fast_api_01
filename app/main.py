@@ -2,7 +2,7 @@ from os import stat
 from typing import Optional
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
-from pydantic import BaseModel
+
 from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -10,7 +10,7 @@ import time
 from sqlalchemy import engine
 from starlette.status import HTTP_404_NOT_FOUND
 import time
-import models
+import models, schemas
 from .database import engine, get_db
 from sqlalchemy.orm import Session
 
@@ -22,10 +22,7 @@ app = FastAPI()
 
 
 
-class Post(BaseModel):
-    title: str
-    content: str
-    published: bool = True
+
 
 while True:
     try:
@@ -44,21 +41,27 @@ def root():
 
 
 @app.get("/posts")
-def get_posts():
-    cursor.execute(""" SELECT * from posts """)
-    posts = cursor.fetchall()
+def get_posts(db: Session =  Depends(get_db)):
+    # cursor.execute(""" SELECT * from posts """)
+    # posts = cursor.fetchall()
+
+    posts = db.query(models.Post).all()
     return {"data": posts}
 
 
 @app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_a_posts(post: Post):
-    cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING 
-    * """, 
-                    (post.title, post.content, post.published))
+def create_a_posts(post: Post, db: Session =  Depends(get_db)):
+    # cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING 
+    # * """, 
+    #                 (post.title, post.content, post.published))
 
-    new_post = cursor.fetchone()
+    # new_post = cursor.fetchone()
 
-    conn.commit()
+    # conn.commit()
+    new_post = models.Post(**post.dict())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
     return {"data": new_post}
 
 
