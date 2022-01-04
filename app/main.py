@@ -1,17 +1,26 @@
 from os import stat
 from typing import Optional
-from fastapi import FastAPI, Response, status, HTTPException
+from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
 from pydantic import BaseModel
 from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
-
+from sqlalchemy import engine
 from starlette.status import HTTP_404_NOT_FOUND
+import time
+import models
+from .database import engine, get_db
+from sqlalchemy.orm import Session
+
+
+models.Base.metadata.create_all(bind = engine)
 
 
 app = FastAPI()
+
+
 
 class Post(BaseModel):
     title: str
